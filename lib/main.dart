@@ -1579,7 +1579,7 @@ class _TourismShellState extends State<TourismShell> {
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
               labelText: 'Nomor WhatsApp admin',
-              helperText: 'Contoh: 6281234567890',
+              helperText: 'Contoh: 6287748071872',
               prefixIcon: Icon(Icons.chat_bubble_outline),
             ),
           ),
