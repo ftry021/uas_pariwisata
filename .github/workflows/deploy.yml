@@ -27,7 +27,7 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build web --release --base-href /uas_pariwisata/
+      - run: flutter build web --release
 
       - uses: actions/upload-pages-artifact@v3
         with:
