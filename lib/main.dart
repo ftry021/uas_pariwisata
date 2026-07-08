@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(const TourismApp());
@@ -16,7 +18,7 @@ class TourismApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'SIP Benang Stokel',
+      title: 'Watterfall Bookings',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: seed),
@@ -2120,49 +2122,51 @@ class _TourismShellState extends State<TourismShell> {
   }
 
   Future<void> _submitBooking(
-    String packageName,
-    int total, {
-    bool notifyAdmin = false,
-  }) async {
-    final name = _bookingNameController.text.trim();
-    final phone = _bookingPhoneController.text.trim();
+  String packageName,
+  int total, {
+  bool notifyAdmin = false,
+}) async {
 
-    if (name.isEmpty || phone.isEmpty) {
-      _showSnack('Nama dan nomor telepon wajib diisi.');
-      return;
-    }
+  final name = _bookingNameController.text.trim();
+  final phone = _bookingPhoneController.text.trim();
 
-    final booking = Booking(
-      id: _bookingSequence,
-      visitorName: name,
-      phone: phone,
-      arrivalDate: _arrivalDate,
-      guestCount: _guestCount,
-      packageName: packageName,
-      totalPrice: total,
-      status: 'Menunggu',
-    );
+  if (name.isEmpty || phone.isEmpty) {
+    _showSnack('Nama dan nomor telepon wajib diisi.');
+    return;
+  }
 
-    setState(() {
-      _bookings.insert(0, booking);
-      _bookingSequence++;
-      _bookingNameController.clear();
-      _bookingPhoneController.clear();
-      _guestCount = 1;
-      _selectedPackageName = 'Tiket Mandiri';
-      _arrivalDate = DateTime.now().add(const Duration(days: 1));
-    });
+  final response = await http.post(
+    Uri.parse("http://waterfallbooking.web.id/api/booking"),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "id_wisata": 1,
+      "nama_pengunjung": name,
+      "no_hp": phone,
+      "jumlah_tiket": _guestCount,
+      "tanggal_kunjungan":
+          _arrivalDate.toIso8601String().substring(0, 10)
+    }),
+  );
 
-    _showSnack(
-      notifyAdmin
-          ? 'Booking disimpan. Membuka WhatsApp admin...'
-          : 'Booking berhasil disimpan dan menunggu konfirmasi admin.',
-    );
+  if (response.statusCode == 201) {
+
+    _bookingNameController.clear();
+    _bookingPhoneController.clear();
+
+    _showSnack("Booking berhasil disimpan.");
 
     if (notifyAdmin) {
-      await _openAdminWhatsApp(_bookingMessage(booking));
+      await _openAdminWhatsApp("Booking baru dari $name");
     }
+
+  } else {
+
+    _showSnack("Booking gagal.");
+
   }
+}
 
   void _submitReview() {
     final name = _reviewNameController.text.trim();
