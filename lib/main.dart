@@ -169,11 +169,14 @@ class _TourismShellState extends State<TourismShell> {
 
   @override
   void initState() {
-    super.initState();
-    _openHoursController = TextEditingController(text: _openHours);
-    _announcementController = TextEditingController(text: _announcement);
-    _adminWhatsAppController =
-        TextEditingController(text: _adminWhatsAppNumber);
+  super.initState();
+
+  _openHoursController = TextEditingController(text: _openHours);
+  _announcementController =
+      TextEditingController(text: _announcement);
+  _adminWhatsAppController =
+      TextEditingController(text: _adminWhatsAppNumber);
+
 
     _galleryItems = const [
       GalleryItem(
@@ -233,29 +236,7 @@ class _TourismShellState extends State<TourismShell> {
       ),
     ];
 
-    final now = DateTime.now();
-    _bookings = [
-      Booking(
-        id: 1,
-        visitorName: 'Renda Ayu',
-        phone: '081234567890',
-        arrivalDate: now.add(const Duration(days: 2)),
-        guestCount: 4,
-        packageName: 'Guide Trekking',
-        totalPrice: 220000,
-        status: 'Disetujui',
-      ),
-      Booking(
-        id: 2,
-        visitorName: 'Luis Pernando',
-        phone: '087812341234',
-        arrivalDate: now.add(const Duration(days: 5)),
-        guestCount: 2,
-        packageName: 'Tiket Mandiri',
-        totalPrice: 20000,
-        status: 'Menunggu',
-      ),
-    ];
+ 
 
     _reviews = const [
       VisitorReview(
@@ -277,7 +258,35 @@ class _TourismShellState extends State<TourismShell> {
         comment: 'Cocok untuk liburan keluarga dan foto alam.',
       ),
     ];
+
+     loadBooking();
+
   }
+
+    Future<void> loadBooking() async {
+  final response = await http.get(
+    Uri.parse("https://api.waterfallbooking.web.id/api/booking"),
+  );
+
+  if (response.statusCode == 200) {
+    final List data = jsonDecode(response.body);
+
+    setState(() {
+      _bookings = data.map((item) {
+        return Booking(
+          id: item["id_booking"],
+          visitorName: item["nama_pengunjung"],
+          phone: item["no_hp"],
+          arrivalDate: DateTime.parse(item["tanggal_kunjungan"]),
+          guestCount: item["jumlah_tiket"],
+          packageName: "Tiket Wisata",
+          totalPrice: item["jumlah_tiket"] * 10000,
+          status: item["status"],
+        );
+      }).toList();
+    });
+  }
+}
 
   @override
   void dispose() {
@@ -2136,7 +2145,7 @@ class _TourismShellState extends State<TourismShell> {
   }
 
   final response = await http.post(
-    Uri.parse("http://waterfallbooking.web.id/api/booking"),
+    Uri.parse("https://api.waterfallbooking.web.id/api/booking"),
     headers: {
       "Content-Type": "application/json",
     },
@@ -2156,6 +2165,8 @@ class _TourismShellState extends State<TourismShell> {
     _bookingPhoneController.clear();
 
     _showSnack("Booking berhasil disimpan.");
+
+     await loadBooking();
 
     if (notifyAdmin) {
       await _openAdminWhatsApp("Booking baru dari $name");
